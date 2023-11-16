@@ -21,9 +21,25 @@ ngrok config add-auth <your_auth_token>
 
 # 3. Run App
 1. Clone the repository.
-2. Open it in your IDE.
-3. Add your API key and secret key as environment variables (See application.yml)
-4. Run the app.
+2. Open a terminal and run the following command:
+```
+docker build -t tradingview-binance-connector . 
+```
+3. Create .env file with these contents:
+```
+BINANCE_API_KEY=<your_binance_api_key>
+BINANCE_SECRET_KEY=<your_binance_secret_key>
+BINANCE_POSITION_PERCENTAGE=<your_position_percentage>
+BINANCE_LEVERAGE=<your_leverage>
+```
+Position percentage is the percentage of your balance you want to use for each trade.
+Default is 100.
+Leverage is the leverage you want to use for each trade.
+Default is 3.
+4. Run the app with the following command:
+```
+docker run -d -p 8080:8080 --env-file .env tradingview-binance-connector
+```
 
 # 4. Run Ngrok
 1. Open a terminal and run the following command, where 8080 is the port number of the app:
