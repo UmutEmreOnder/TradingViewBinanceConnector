@@ -34,8 +34,10 @@ BINANCE_LEVERAGE=<your_leverage>
 ```
 Position percentage is the percentage of your balance you want to use for each trade.
 Default is 100.
+</br>
 Leverage is the leverage you want to use for each trade.
 Default is 3.
+
 4. Run the app with the following command:
 ```
 docker run -d -p 8080:8080 --env-file .env tradingview-binance-connector
