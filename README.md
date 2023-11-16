@@ -41,7 +41,7 @@ ngrok http 8080
 7. Set the alert message to the following format:
 ```
 {
-   "ticker": "{{ticker}}", 
+   "symbol": "{{ticker}}", 
    "action": "{{strategy.order.action}}"
 }
 ```
