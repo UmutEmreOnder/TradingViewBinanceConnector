@@ -31,4 +31,23 @@ ngrok http 8080
 ```
 2. Copy the forwarding link from the terminal and use it to access the app from anywhere
 
+# 5. Set Alerts on TradingView
+1. Open [TradingView](https://www.tradingview.com/).
+2. Open the chart of the stock you want to trade.
+3. Click on the alert button.
+4. Set the alert to be triggered when the price is above the upper band or below the lower band, or use your strategy.
+5. Set the alert to send a webhook.
+6. Paste the forwarding link from Ngrok in the URL field.
+7. Set the alert message to the following format:
+```
+{
+   "ticker": "{{ticker}}", 
+   "action": "{{strategy.order.action}}"
+}
+```
+8. Click on create alert.
 
+Note that this app currently supports only the following actions: buy and sell.
+If the last alert was ```buy``` and the new alert is ```sell``` the app will close the long position
+and open a short position.
+It doesn't support take profit or stop loss for now.

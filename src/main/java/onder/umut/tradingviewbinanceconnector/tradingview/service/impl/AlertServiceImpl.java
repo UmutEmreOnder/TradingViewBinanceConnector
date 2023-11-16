@@ -3,7 +3,6 @@ package onder.umut.tradingviewbinanceconnector.tradingview.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onder.umut.tradingviewbinanceconnector.tradingview.dto.Alert;
-import onder.umut.tradingviewbinanceconnector.tradingview.mapper.AlertMapper;
 import onder.umut.tradingviewbinanceconnector.tradingview.service.AlertService;
 import org.springframework.stereotype.Service;
 
@@ -11,14 +10,11 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class AlertServiceImpl implements AlertService {
-    private final AlertMapper alertMapper;
-
     private String lastAction = "";
 
     @Override
-    public void processAlert(String alertBody) {
-        log.info("Processing alert: {}", alertBody);
-        Alert alert = alertMapper.mapTo(alertBody);
+    public void processAlert(Alert alert) {
+        log.info("Received alert: {}", alert);
 
         if (lastAction.equals(alert.getAction())) {
             log.info("Skipping alert: {}", alert);
