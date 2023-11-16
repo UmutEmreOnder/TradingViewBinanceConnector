@@ -22,7 +22,8 @@ ngrok config add-auth <your_auth_token>
 # 3. Run App
 1. Clone the repository.
 2. Open it in your IDE.
-3. Run the app.
+3. Add your API key and secret key as environment variables (See application.yml)
+4. Run the app.
 
 # 4. Run Ngrok
 1. Open a terminal and run the following command, where 8080 is the port number of the app:
@@ -47,7 +48,9 @@ ngrok http 8080
 ```
 8. Click on create alert.
 
-Note that this app currently supports only the following actions: buy and sell.
+## Note
+This app currently supports only the following actions: buy and sell.
 If the last alert was ```buy``` and the new alert is ```sell``` the app will close the long position
 and open a short position.
 It doesn't support take profit or stop loss for now.
+It cannot open a short position if the last alert was ```sell```.

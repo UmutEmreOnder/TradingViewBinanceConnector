@@ -17,8 +17,7 @@ public class AlertServiceImpl implements AlertService {
         log.info("Received alert: {}", alert);
 
         if (lastAction.equals(alert.getAction())) {
-            log.info("Skipping alert: {}", alert);
-            return;
+            log.info("Skipping alert because last action '{}' is the same as current action '{}'", lastAction, alert.getAction());
         }
 
         lastAction = alert.getAction();
