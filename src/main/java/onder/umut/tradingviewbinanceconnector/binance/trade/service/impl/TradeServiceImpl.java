@@ -33,6 +33,7 @@ public class TradeServiceImpl implements TradeService {
 
     @Override
     public void closeAllPositions() {
+        log.info("Closing all positions");
         HashMap<String, Double> positions = getPositions();
 
         for (Map.Entry<String, Double> entry : positions.entrySet()) {
@@ -59,6 +60,7 @@ public class TradeServiceImpl implements TradeService {
 
     @Override
     public void openLongPosition(String symbol) {
+        log.info("Opening long position for symbol: {}", symbol);
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         Double maxQuantity = calculateMaxQuantity(symbol);
 
@@ -79,6 +81,7 @@ public class TradeServiceImpl implements TradeService {
 
     @Override
     public void openShortPosition(String symbol) {
+        log.info("Opening short position for symbol: {}", symbol);
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         Double maxQuantity = calculateMaxQuantity(symbol);
 
