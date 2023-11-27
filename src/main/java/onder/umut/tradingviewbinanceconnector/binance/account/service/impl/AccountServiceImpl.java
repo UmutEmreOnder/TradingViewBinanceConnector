@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onder.umut.tradingviewbinanceconnector.binance.account.service.AccountService;
+import onder.umut.tradingviewbinanceconnector.binance.config.BinanceConfig;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -18,12 +19,15 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
     private final UMFuturesClientImpl client;
+    private final BinanceConfig binanceConfig;
     LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
 
     @Override
@@ -89,5 +93,32 @@ public class AccountServiceImpl implements AccountService {
         }
 
         return null;
+    }
+
+    @Override
+    public void closeAllOrders(String symbol) {
+        log.info("Closing all open orders for symbol: {} if not filled in {} minutes", symbol, binanceConfig.getWaitTime());
+        Timer timer = new Timer();
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                parameters.put("symbol", symbol);
+
+                try {
+                    String result = client.account().cancelAllOpenOrders(parameters);
+                    log.info(result);
+                } catch (BinanceConnectorException e) {
+                    log.error("fullErrMessage: {}", e.getMessage(), e);
+                } catch (BinanceClientException e) {
+                    log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}",
+                            e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
+                }
+            }
+        };
+
+        long delay = binanceConfig.getWaitTime() * 60 * 1000;
+
+        timer.schedule(task, delay);
     }
 }

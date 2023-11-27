@@ -29,7 +29,9 @@ docker build -t tradingview-binance-connector .
 ```
 BINANCE_API_KEY=<your_binance_api_key>
 BINANCE_SECRET_KEY=<your_binance_secret_key>
+BINANCE_WAIT_TIME=<wait_time_in_minutes_after_placing_order>
 ```
+If an order is not filled within the wait time, it will be canceled.
 
 4. Run the app with the following command:
 ```

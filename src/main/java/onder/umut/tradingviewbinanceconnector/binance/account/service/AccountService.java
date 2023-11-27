@@ -8,4 +8,6 @@ public interface AccountService {
     void changeInitialLeverage(Integer leverage, String symbol);
 
     Double getPositionAmount(String symbol);
+
+    void closeAllOrders(String symbol);
 }

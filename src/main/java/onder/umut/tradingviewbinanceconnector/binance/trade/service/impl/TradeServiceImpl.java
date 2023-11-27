@@ -13,6 +13,8 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +47,7 @@ public class TradeServiceImpl implements TradeService {
 
         try {
             client.account().newOrder(parameters);
-            // todo: check if order is filled, if not cancel it
+            accountService.closeAllOrders(alert.getSymbol()); // If the order is not filled, cancel it after x minutes
 
             log.info("Long position opened for {} with amount {}", alert.getSymbol(), quantity);
         } catch (BinanceConnectorException e) {

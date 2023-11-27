@@ -2,3 +2,4 @@ app:
   binance:
     api-key: ${BINANCE_API_KEY:}
     secret-key: ${BINANCE_SECRET_KEY:}
+    wait-time: ${BINANCE_WAIT_TIME:1}
