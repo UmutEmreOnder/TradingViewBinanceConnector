@@ -16,7 +16,7 @@ or you can use the following command to download and unzip the file:
 2. Copy your Ngrok auth token from [here](https://dashboard.ngrok.com/get-started/your-authtoken).
 3. Write the following command in the terminal:
 ```
-ngrok config add-auth <your_auth_token>
+ngrok config add-authtoken <your_auth_token>
 ```
 
 # 3. Run App
@@ -51,7 +51,7 @@ ngrok http 8080
 3. Click on the alert button.
 4. Set the alert to be triggered when the price is above the upper band or below the lower band, or use your strategy.
 5. Set the alert to send a webhook.
-6. Paste the forwarding link from Ngrok in the URL field.
+6. Paste the forwarding link from Ngrok in the URL field, and add ```/alert``` at the end of the url.
 7. Set the alert message to the following format:
 ```
 {
