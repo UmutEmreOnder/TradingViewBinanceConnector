@@ -10,10 +10,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onder.umut.tradingviewbinanceconnector.binance.account.service.AccountService;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 @Service
@@ -38,6 +41,48 @@ public class AccountServiceImpl implements AccountService {
                 }
             }
         } catch (BinanceConnectorException | JsonProcessingException e) {
+            log.error("fullErrMessage: {}", e.getMessage(), e);
+        } catch (BinanceClientException e) {
+            log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}", e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
+        }
+
+        return null;
+    }
+
+    @Override
+    public void changeInitialLeverage(Integer leverage, String symbol) {
+        log.info("Changing initial leverage for symbol: {} to: {}", symbol, leverage);
+        parameters.put("symbol", symbol);
+        parameters.put("leverage", leverage);
+
+        try {
+            String result = client.account().changeInitialLeverage(parameters);
+            log.info(result);
+        } catch (BinanceConnectorException e) {
+            log.error("fullErrMessage: {}", e.getMessage(), e);
+        } catch (BinanceClientException e) {
+            log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}",
+                    e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
+        }
+    }
+
+    @Override
+    public Double getPositionAmount(String symbol) {
+        try {
+            String result = client.account().positionInformation(parameters);
+            JSONArray jsonArray = new JSONArray(result);
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String posSymbol = jsonObject.getString("symbol");
+                double positionAmt = jsonObject.getDouble("positionAmt");
+
+                if (posSymbol.equals(symbol)) {
+                    log.info("Open position: " + symbol + ", Amount: " + positionAmt);
+                    return positionAmt;
+                }
+            }
+        } catch (BinanceConnectorException e) {
             log.error("fullErrMessage: {}", e.getMessage(), e);
         } catch (BinanceClientException e) {
             log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}", e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);

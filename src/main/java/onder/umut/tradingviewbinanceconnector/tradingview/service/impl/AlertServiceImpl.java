@@ -13,27 +13,17 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AlertServiceImpl implements AlertService {
     private final TradeService tradeService;
-    private String lastAction = "";
-
     @Override
     public void processAlert(Alert alert) {
         log.info("Received alert: {}", alert);
 
-        if (lastAction.equals(alert.getAction())) {
-            log.info("Skipping alert because last action '{}' is the same as current action '{}'", lastAction, alert.getAction());
-            return;
-        }
-
-        lastAction = alert.getAction();
-        tradeService.closeAllPositions();
-
         String symbol = alert.getSymbol().split("\\.")[0];
-        log.info("Opening position for symbol: {}", symbol);
+        alert.setSymbol(symbol);
 
-        switch (alert.getAction()) {
-            case "buy" -> tradeService.openLongPosition(symbol);
-            case "sell" -> tradeService.openShortPosition(symbol);
-            default -> log.error("Unknown action '{}' for alert: {}", alert.getAction(), alert);
+        if (alert.getSignalAction().equals("flat")) {
+            tradeService.closePosition(alert);
+        } else {
+            tradeService.openPosition(alert);
         }
     }
 }

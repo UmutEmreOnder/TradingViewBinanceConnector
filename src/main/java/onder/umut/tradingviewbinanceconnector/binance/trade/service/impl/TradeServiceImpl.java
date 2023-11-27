@@ -3,75 +3,51 @@ package onder.umut.tradingviewbinanceconnector.binance.trade.service.impl;
 import com.binance.connector.futures.client.exceptions.BinanceClientException;
 import com.binance.connector.futures.client.exceptions.BinanceConnectorException;
 import com.binance.connector.futures.client.impl.UMFuturesClientImpl;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onder.umut.tradingviewbinanceconnector.binance.account.service.AccountService;
-import onder.umut.tradingviewbinanceconnector.binance.config.BinanceConfig;
 import onder.umut.tradingviewbinanceconnector.binance.trade.service.TradeService;
+import onder.umut.tradingviewbinanceconnector.tradingview.dto.Alert;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TradeServiceImpl implements TradeService {
-    private final BinanceConfig binanceConfig;
     private final AccountService accountService;
     private final UMFuturesClientImpl client;
 
     @Override
-    public void closeAllPositions() {
-        log.info("Closing all positions");
-        HashMap<String, Double> positions = getPositions();
-
-        for (Map.Entry<String, Double> entry : positions.entrySet()) {
-            LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-            String symbol = entry.getKey();
-            Double amount = entry.getValue();
-            String side = amount > 0 ? "SELL" : "BUY";
-
-            parameters.put("symbol", symbol);
-            parameters.put("side", side);
-            parameters.put("type", "MARKET");
-            parameters.put("quantity", amount * -1);
-
-            try {
-                client.account().newOrder(parameters);
-                log.info("Position closed for {} with amount {}", symbol, amount);
-            } catch (BinanceConnectorException e) {
-                log.error("fullErrMessage: {}", e.getMessage(), e);
-            } catch (BinanceClientException e) {
-                log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}", e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
-            }
-        }
-    }
-
-    @Override
-    public void openLongPosition(String symbol) {
-        log.info("Opening long position for symbol: {}", symbol);
+    public void openPosition(Alert alert) {
+        log.info("Opening long position for symbol: {}", alert.getSymbol());
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        Double maxQuantity = calculateMaxQuantity(symbol);
+        Double balance = accountService.getBalance();
 
-        parameters.put("symbol", symbol);
-        parameters.put("side", "BUY");
-        parameters.put("type", "MARKET");
-        parameters.put("quantity", maxQuantity);
+        if (balance < alert.getPositionSize()) {
+            log.error("Not enough balance to open long position for symbol: {}", alert.getSymbol());
+            return;
+        }
+
+        Double quantity = calculateQuantity(alert.getEntryPrice(), alert.getPositionSize(), alert.getLeverage());
+        accountService.changeInitialLeverage(alert.getLeverage(), alert.getSymbol());
+
+        parameters.put("symbol", alert.getSymbol());
+        parameters.put("side", alert.getPosition().toUpperCase());
+        parameters.put("type", "LIMIT");
+        parameters.put("quantity", quantity);
+        parameters.put("timeInForce", "GTC");
+        parameters.put("price", alert.getEntryPrice());
+
 
         try {
             client.account().newOrder(parameters);
-            log.info("Long position opened for {} with amount {}", symbol, maxQuantity);
+            // todo: check if order is filled, if not cancel it
+
+            log.info("Long position opened for {} with amount {}", alert.getSymbol(), quantity);
         } catch (BinanceConnectorException e) {
             log.error("fullErrMessage: {}", e.getMessage(), e);
         } catch (BinanceClientException e) {
@@ -80,19 +56,24 @@ public class TradeServiceImpl implements TradeService {
     }
 
     @Override
-    public void openShortPosition(String symbol) {
-        log.info("Opening short position for symbol: {}", symbol);
+    public void closePosition(Alert alert) {
+        log.info("Closing position for symbol: {}", alert.getSymbol());
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        Double maxQuantity = calculateMaxQuantity(symbol);
+        Double quantity = accountService.getPositionAmount(alert.getSymbol());
 
-        parameters.put("symbol", symbol);
-        parameters.put("side", "SELL");
+        if (quantity == null || quantity == 0.0) {
+            log.error("No open position found for symbol: {}", alert.getSymbol());
+            return;
+        }
+
+        parameters.put("symbol", alert.getSymbol());
+        parameters.put("side", alert.getPosition().toUpperCase());
         parameters.put("type", "MARKET");
-        parameters.put("quantity", maxQuantity);
+        parameters.put("quantity", quantity);
 
         try {
             client.account().newOrder(parameters);
-            log.info("Short position opened for {} with amount {}", symbol, maxQuantity);
+            log.info("Position closed for symbol: {}", alert.getSymbol());
         } catch (BinanceConnectorException e) {
             log.error("fullErrMessage: {}", e.getMessage(), e);
         } catch (BinanceClientException e) {
@@ -100,51 +81,8 @@ public class TradeServiceImpl implements TradeService {
         }
     }
 
-    private Double calculateMaxQuantity(String symbol) {
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-
-        String result = client.market().markPrice(parameters);
-        JSONArray jsonArray = new JSONArray(result);
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-            String symbolFromApi = jsonObject.getString("symbol");
-            if (symbolFromApi.equals(symbol)) {
-                double markPrice = jsonObject.getDouble("markPrice");
-                double maxQuantity = (accountService.getBalance() * binanceConfig.getPositionPercentage() / 100)
-                        * binanceConfig.getLeverage() / markPrice;
-                double roundedMaxQuantity = Math.floor(maxQuantity * 100) / 100;
-                log.info("Rounded max quantity for {} is {}", symbol, roundedMaxQuantity);
-                return roundedMaxQuantity;
-            }
-        }
-
-        return null;
-    }
-
-    private HashMap<String, Double> getPositions() {
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        HashMap<String, Double> positions = new HashMap<>();
-
-        try {
-            String result = client.account().positionInformation(parameters);
-            JSONArray jsonArray = new JSONArray(result);
-
-            for (int i = 0; i < jsonArray.length(); i++) {
-                JSONObject jsonObject = jsonArray.getJSONObject(i);
-                String symbol = jsonObject.getString("symbol");
-                double positionAmt = jsonObject.getDouble("positionAmt");
-
-                if (positionAmt != 0) {
-                    log.info("Open position: " + symbol + ", Amount: " + positionAmt);
-                    positions.put(symbol, positionAmt);
-                }
-            }
-        } catch (BinanceConnectorException e) {
-            log.error("fullErrMessage: {}", e.getMessage(), e);
-        } catch (BinanceClientException e) {
-            log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}", e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
-        }
-
-        return positions;
+    private Double calculateQuantity(Double entryPrice, Integer positionSize, Integer leverage) {
+        double quantity = positionSize * leverage / entryPrice;
+        return Math.round(quantity * 100.0) / 100.0;
     }
 }

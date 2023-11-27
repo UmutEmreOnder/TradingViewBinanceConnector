@@ -29,14 +29,7 @@ docker build -t tradingview-binance-connector .
 ```
 BINANCE_API_KEY=<your_binance_api_key>
 BINANCE_SECRET_KEY=<your_binance_secret_key>
-BINANCE_POSITION_PERCENTAGE=<your_position_percentage>
-BINANCE_LEVERAGE=<your_leverage>
 ```
-Position percentage is the percentage of your balance you want to use for each trade.
-Default is 100.
-</br>
-Leverage is the leverage you want to use for each trade.
-Default is 3.
 
 4. Run the app with the following command:
 ```
@@ -60,15 +53,14 @@ ngrok http 8080
 7. Set the alert message to the following format:
 ```
 {
-   "symbol": "{{ticker}}", 
-   "action": "{{strategy.order.action}}"
+  "symbol": "{{ticker}}",
+  "position": "{{strategy.order.action}}",
+  "signal_action": "{{strategy.market_position}}",
+  "entry_price": "{{strategy.order.price}}",
+  "leverage": "{{strategy.order.contracts}}",
+  "position_size": x
 }
 ```
-8. Click on create alert.
+Where x is the USD amount you want to trade with.
 
-## Note
-This app currently supports only the following actions: buy and sell.
-If the last alert was ```buy``` and the new alert is ```sell``` the app will close the long position
-and open a short position.
-It doesn't support take profit or stop loss for now.
-It cannot open a short position if the last alert was ```sell```.
+8. Click on create alert.

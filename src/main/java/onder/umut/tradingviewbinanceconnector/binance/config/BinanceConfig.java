@@ -6,8 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -27,14 +25,4 @@ public class BinanceConfig {
     @NotBlank
     @NotEmpty
     private String secretKey;
-
-    @NotNull
-    @Min(1)
-    @Max(100)
-    private Integer positionPercentage;
-
-    @NotNull
-    @Min(2)
-    @Max(125)
-    private Integer leverage;
 }
