@@ -1,7 +1,5 @@
 package onder.umut.tradingviewbinanceconnector.binance.account.service;
 
-import java.util.Map;
-
 public interface AccountService {
     Double getBalance();
 
@@ -9,5 +7,7 @@ public interface AccountService {
 
     Double getPositionAmount(String symbol);
 
-    void closeAllOrders(String symbol);
+    void closeAllOrdersInWaitTime(String symbol);
+
+    void closeAllOrdersImmediately(String symbol);
 }

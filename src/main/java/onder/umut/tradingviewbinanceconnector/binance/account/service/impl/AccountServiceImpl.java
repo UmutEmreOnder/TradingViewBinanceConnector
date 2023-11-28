@@ -96,29 +96,36 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void closeAllOrders(String symbol) {
+    public void closeAllOrdersInWaitTime(String symbol) {
         log.info("Closing all open orders for symbol: {} if not filled in {} minutes", symbol, binanceConfig.getWaitTime());
         Timer timer = new Timer();
 
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                parameters.put("symbol", symbol);
-
-                try {
-                    String result = client.account().cancelAllOpenOrders(parameters);
-                    log.info(result);
-                } catch (BinanceConnectorException e) {
-                    log.error("fullErrMessage: {}", e.getMessage(), e);
-                } catch (BinanceClientException e) {
-                    log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}",
-                            e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
-                }
+                closeAllOrdersImmediately(symbol);
             }
         };
 
-        long delay = binanceConfig.getWaitTime() * 60 * 1000;
+        long delay = binanceConfig.getWaitTime() * 60 * 1000L;
 
         timer.schedule(task, delay);
+    }
+
+    @Override
+    public void closeAllOrdersImmediately(String symbol) {
+        log.info("Closing all open orders for symbol: {}", symbol);
+
+        parameters.put("symbol", symbol);
+
+        try {
+            String result = client.account().cancelAllOpenOrders(parameters);
+            log.info(result);
+        } catch (BinanceConnectorException e) {
+            log.error("fullErrMessage: {}", e.getMessage(), e);
+        } catch (BinanceClientException e) {
+            log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}",
+                    e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
+        }
     }
 }

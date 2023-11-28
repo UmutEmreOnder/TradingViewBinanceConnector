@@ -59,10 +59,30 @@ ngrok http 8080
   "position": "{{strategy.order.action}}",
   "signal_action": "{{strategy.market_position}}",
   "entry_price": "{{strategy.order.price}}",
+  "take_profit": "{{plot_0}}",
   "leverage": "{{strategy.order.contracts}}",
   "position_size": x
 }
 ```
+
 Where x is the USD amount you want to trade with.
 
+### About plot_0
+TradingView does not allow sending the value of the limit price of the order in the alert message,
+so we use the value of the first plot instead. nth plot can be accessed using ```{{plot_n}}```.
+
+
+
 8. Click on create alert.
+
+
+# How it works
+When an alert is triggered, the app will place a limit order with the specified ```entry_price``` and ```leverage```.
+The app will create a limit order at ```take_profit``` on the opposite side of the position.
+If the entry order is not filled within the wait time, it will cancel both entry and take profit orders.
+
+Binance API does not support stop loss, so for stop loss, it has to wait an alert from TradingView also.
+When the ```signal_action``` is equal to ```flat```,
+it will close all the open positions for that symbol with market orders and cancel all limit orders.
+Take profit can be set via limit order, so before that alert the order will be filled, probably.
+If not, it will be filled with market order again like in stop loss.

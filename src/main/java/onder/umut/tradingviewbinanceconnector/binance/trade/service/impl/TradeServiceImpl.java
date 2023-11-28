@@ -8,13 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import onder.umut.tradingviewbinanceconnector.binance.account.service.AccountService;
 import onder.umut.tradingviewbinanceconnector.binance.trade.service.TradeService;
 import onder.umut.tradingviewbinanceconnector.tradingview.dto.Alert;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
 import org.springframework.stereotype.Service;
 
+
 import java.util.LinkedHashMap;
-import java.util.Timer;
-import java.util.TimerTask;
 
 @Service
 @RequiredArgsConstructor
@@ -47,9 +45,38 @@ public class TradeServiceImpl implements TradeService {
 
         try {
             client.account().newOrder(parameters);
-            accountService.closeAllOrders(alert.getSymbol()); // If the order is not filled, cancel it after x minutes
+            createTakeProfitOrder(alert, quantity);
+
+            // If the order is not filled, cancel it after x minutes
+            accountService.closeAllOrdersInWaitTime(alert.getSymbol());
 
             log.info("Long position opened for {} with amount {}", alert.getSymbol(), quantity);
+        } catch (BinanceConnectorException e) {
+            log.error("fullErrMessage: {}", e.getMessage(), e);
+        } catch (BinanceClientException e) {
+            log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}", e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
+        }
+    }
+
+    private void createTakeProfitOrder(Alert alert, Double quantity) {
+        log.info("Creating take profit order for symbol: {}", alert.getSymbol());
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+
+        if (quantity == null || quantity == 0.0) {
+            log.error("No open position found for symbol: {}", alert.getSymbol());
+            return;
+        }
+
+        parameters.put("symbol", alert.getSymbol());
+        parameters.put("side", alert.getPosition().equals("buy") ? "SELL" : "BUY");
+        parameters.put("type", "LIMIT");
+        parameters.put("quantity", quantity);
+        parameters.put("timeInForce", "GTC");
+        parameters.put("price", alert.getTakeProfit());
+
+        try {
+            client.account().newOrder(parameters);
+            log.info("Take profit order created for symbol: {}", alert.getSymbol());
         } catch (BinanceConnectorException e) {
             log.error("fullErrMessage: {}", e.getMessage(), e);
         } catch (BinanceClientException e) {
@@ -75,6 +102,7 @@ public class TradeServiceImpl implements TradeService {
 
         try {
             client.account().newOrder(parameters);
+            accountService.closeAllOrdersImmediately(alert.getSymbol());
             log.info("Position closed for symbol: {}", alert.getSymbol());
         } catch (BinanceConnectorException e) {
             log.error("fullErrMessage: {}", e.getMessage(), e);

@@ -38,6 +38,9 @@ public class Alert {
     private Double entryPrice;
 
     @NotNull
+    private Double takeProfit;
+
+    @NotNull
     private Integer leverage;
 
     @NotNull
