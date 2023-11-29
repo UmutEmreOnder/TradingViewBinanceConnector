@@ -103,7 +103,12 @@ public class AccountServiceImpl implements AccountService {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                closeAllOrdersImmediately(symbol);
+                Double positionAmount = getPositionAmount(symbol);
+
+                if (positionAmount == null || positionAmount == 0.0) {
+                    log.info("No open position found for symbol: {}", symbol);
+                    closeAllOrdersImmediately(symbol);
+                }
             }
         };
 
