@@ -96,7 +96,7 @@ public class TradeServiceImpl implements TradeService {
         parameters.put("symbol", alert.getSymbol());
         parameters.put("side", alert.getPosition().toUpperCase());
         parameters.put("type", "MARKET");
-        parameters.put("quantity", quantity);
+        parameters.put("quantity", Math.abs(quantity));
 
         try {
             client.account().newOrder(parameters);
