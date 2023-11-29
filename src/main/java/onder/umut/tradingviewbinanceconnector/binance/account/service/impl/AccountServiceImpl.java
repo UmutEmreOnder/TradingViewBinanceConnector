@@ -28,10 +28,11 @@ import java.util.TimerTask;
 public class AccountServiceImpl implements AccountService {
     private final UMFuturesClientImpl client;
     private final BinanceConfig binanceConfig;
-    LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
 
     @Override
     public Double getBalance() {
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+
         try {
             String result = client.account().futuresAccountBalance(parameters);
             ObjectMapper mapper = new ObjectMapper();
@@ -54,24 +55,9 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void changeInitialLeverage(Integer leverage, String symbol) {
-        log.info("Changing initial leverage for symbol: {} to: {}", symbol, leverage);
-        parameters.put("symbol", symbol);
-        parameters.put("leverage", leverage);
-
-        try {
-            String result = client.account().changeInitialLeverage(parameters);
-            log.info(result);
-        } catch (BinanceConnectorException e) {
-            log.error("fullErrMessage: {}", e.getMessage(), e);
-        } catch (BinanceClientException e) {
-            log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}",
-                    e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
-        }
-    }
-
-    @Override
     public Double getPositionAmount(String symbol) {
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+
         try {
             String result = client.account().positionInformation(parameters);
             JSONArray jsonArray = new JSONArray(result);
@@ -119,6 +105,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void closeAllOrdersImmediately(String symbol) {
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+
         log.info("Closing all open orders for symbol: {}", symbol);
 
         parameters.put("symbol", symbol);

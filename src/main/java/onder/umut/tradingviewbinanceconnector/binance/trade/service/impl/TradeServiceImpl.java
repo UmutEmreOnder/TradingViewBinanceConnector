@@ -6,6 +6,7 @@ import com.binance.connector.futures.client.impl.UMFuturesClientImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onder.umut.tradingviewbinanceconnector.binance.account.service.AccountService;
+import onder.umut.tradingviewbinanceconnector.binance.coin.service.CoinService;
 import onder.umut.tradingviewbinanceconnector.binance.trade.service.TradeService;
 import onder.umut.tradingviewbinanceconnector.tradingview.dto.Alert;
 
@@ -19,6 +20,7 @@ import java.util.LinkedHashMap;
 @Slf4j
 public class TradeServiceImpl implements TradeService {
     private final AccountService accountService;
+    private final CoinService coinService;
     private final UMFuturesClientImpl client;
 
     @Override
@@ -32,8 +34,9 @@ public class TradeServiceImpl implements TradeService {
             return;
         }
 
+        coinService.fitToPrecision(alert);
         Double quantity = calculateQuantity(alert.getEntryPrice(), alert.getPositionSize(), alert.getLeverage());
-        accountService.changeInitialLeverage(alert.getLeverage(), alert.getSymbol());
+        coinService.changeInitialLeverage(alert.getLeverage(), alert.getSymbol());
 
         parameters.put("symbol", alert.getSymbol());
         parameters.put("side", alert.getPosition().toUpperCase());
@@ -61,11 +64,6 @@ public class TradeServiceImpl implements TradeService {
     private void createTakeProfitOrder(Alert alert, Double quantity) {
         log.info("Creating take profit order for symbol: {}", alert.getSymbol());
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-
-        if (quantity == null || quantity == 0.0) {
-            log.error("No open position found for symbol: {}", alert.getSymbol());
-            return;
-        }
 
         parameters.put("symbol", alert.getSymbol());
         parameters.put("side", alert.getPosition().equals("buy") ? "SELL" : "BUY");
