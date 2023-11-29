@@ -13,6 +13,8 @@ import org.json.JSONObject;
 
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -51,12 +53,15 @@ public class CoinServiceImpl implements CoinService {
             return;
         }
 
+        BigDecimal stepSizeBigDecimal = BigDecimal.valueOf(stepSize);
+        int scale = Math.max(0, stepSizeBigDecimal.stripTrailingZeros().scale());
 
-        alert.setEntryPrice(alert.getEntryPrice() - (alert.getEntryPrice() % stepSize));
-        alert.setTakeProfit(alert.getTakeProfit() - (alert.getTakeProfit() % stepSize));
+        BigDecimal entryPrice = BigDecimal.valueOf(alert.getEntryPrice());
+        BigDecimal takeProfit = BigDecimal.valueOf(alert.getTakeProfit());
+
+        alert.setEntryPrice(entryPrice.subtract(entryPrice.remainder(stepSizeBigDecimal)).setScale(scale, RoundingMode.DOWN).doubleValue());
+        alert.setTakeProfit(takeProfit.subtract(takeProfit.remainder(stepSizeBigDecimal)).setScale(scale, RoundingMode.DOWN).doubleValue());
     }
-
-
     private Double getCoinPrecision(String symbol) {
         if (stepSizeMap.containsKey(symbol)) {
             log.info("Step size for symbol: {} is already fetched", symbol);
