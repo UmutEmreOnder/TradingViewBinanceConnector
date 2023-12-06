@@ -35,8 +35,10 @@ If an order is not filled within the wait time, it will be canceled.
 
 4. Run the app with the following command:
 ```
-docker run -d -p 8080:8080 --env-file .env tradingview-binance-connector
+docker run -d -p 80:8080 --env-file .env tradingview-binance-connector
 ```
+TradingView only accepts port 80 for alerts. 
+
 
 # 4. Run Ngrok
 1. Open a terminal and run the following command, where 8080 is the port number of the app:
